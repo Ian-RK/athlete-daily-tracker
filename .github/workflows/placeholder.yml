@@ -1,0 +1,17 @@
+name: foundation-placeholder
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    name: foundation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Foundation status
+        run: echo "Feature CI will be added by dedicated CI PRs."

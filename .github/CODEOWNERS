@@ -1,0 +1,7 @@
+# Security-sensitive repository policy.
+
+* @Ian-RK
+/.github/ @Ian-RK
+/docs/security/ @Ian-RK
+/SECURITY.md @Ian-RK
+/AGENTS.md @Ian-RK

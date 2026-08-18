@@ -1,0 +1,31 @@
+name: Feature
+about: Feature work with explicit security requirements
+title: "[FEAT] "
+labels: [feature]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and boundaries
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security / privacy impact
+      description: What data, ownership boundary, file access, roles, or integrations are affected?
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Definition of done
+      description: Include expected tests and failure cases.
+    validations:
+      required: true

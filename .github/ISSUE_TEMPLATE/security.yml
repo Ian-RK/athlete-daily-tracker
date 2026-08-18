@@ -1,0 +1,26 @@
+name: Security task
+about: Security architecture, vulnerability remediation, authorization, privacy, or hardening work
+title: "[SEC] "
+labels: [security]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the security problem or control to implement.
+    validations:
+      required: true
+  - type: textarea
+    id: threat
+    attributes:
+      label: Threat / abuse case
+      description: Who could abuse this and what could they gain?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: State concrete security and test requirements.
+    validations:
+      required: true
