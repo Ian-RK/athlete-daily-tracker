@@ -1,0 +1,123 @@
+name: foundation-checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  markdown-validation:
+    name: markdown-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install markdownlint
+        run: |
+          set -euo pipefail
+          npm install -g markdownlint-cli@0.33.0
+
+      - name: Run markdownlint
+        run: |
+          set -euo pipefail
+          files=$(git ls-files '*.md' ':!node_modules/*' || true)
+          if [ -z "$files" ]; then
+            echo "No markdown files to check."
+            exit 0
+          fi
+          echo "$files" | tr '\n' '\0' | xargs -0 markdownlint || exit 1
+
+  yaml-validation:
+    name: yaml-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install yamllint
+        run: |
+          set -euo pipefail
+          python3 -m pip install --upgrade pip
+          python3 -m pip install yamllint
+
+      - name: Run yamllint
+        run: |
+          set -euo pipefail
+          files=$(git ls-files '*.yml' '*.yaml' || true)
+          if [ -z "$files" ]; then
+            echo "No YAML files to check."
+            exit 0
+          fi
+          echo "$files" | tr '\n' '\0' | xargs -0 yamllint || exit 1
+
+  repo-structure:
+    name: repo-structure-validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Validate repository structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=("README.md" "SECURITY.md" "CONTRIBUTING.md" "AGENTS.md" ".github" "docs" "db" "apps")
+          missing=()
+          for r in "${required[@]}"; do
+            if [ ! -e "$r" ]; then
+              missing+=("$r")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing required repository files or directories: ${missing[*]}"
+            exit 1
+          fi
+
+  action-policy:
+    name: github-action-policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Detect mutable third-party action refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          errors=0
+          for f in .github/workflows/*.yml; do
+            [ -f "$f" ] || continue
+            # extract lines with uses:
+            while IFS= read -r line; do
+              ref=$(echo "$line" | sed -n 's/.*uses:[[:space:]]*\([^[:space:]]*\).*/\1/p' || true)
+              [ -z "$ref" ] && continue
+              # allow local actions and docker actions
+              case "$ref" in
+                ./*) continue ;; 
+                docker://*) continue ;;
+              esac
+              # if ref contains @ followed by 40 hex chars it's pinned
+              if echo "$ref" | grep -qE "@[0-9a-f]{40}$"; then
+                continue
+              fi
+              echo "Unpinned action reference detected in $f: $ref"
+              errors=$((errors+1))
+            done < <(grep -E "uses:" "$f" || true)
+          done
+          if [ $errors -gt 0 ]; then
+            echo "$errors unpinned action reference(s) found. Pin actions to full commit SHAs."
+            exit 1
+          fi
